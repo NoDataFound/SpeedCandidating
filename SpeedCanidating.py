@@ -15,12 +15,15 @@ from bs4 import BeautifulSoup
 st.set_page_config(layout="wide", page_icon="🇺🇸")
 st.image("static/assets/SpeedCandidating.png", use_column_width=True)
 
-load_dotenv('.env')
-openai.api_key = os.environ.get('OPENAI_API_KEY')
+#load_dotenv('.env')
+openai.api_key = st.secrets["OPENAI"]["OPENAI_API_KEY"]
 
+#openai.api_key = os.environ.get('OPENAI_API_KEY')
 if not openai.api_key:
-    openai.api_key = st.text_input("Enter OPENAI_API_KEY API key")
-    set_key('.env', 'OPENAI_API_KEY', openai.api_key)
+    st.error("OpenAI API key is missing. Please add it to your secrets.")
+#if not openai.api_key:
+#    openai.api_key = st.text_input("Enter OPENAI_API_KEY API key")
+#    set_key('.env', 'OPENAI_API_KEY', openai.api_key)
 
 os.environ['OPENAI_API_KEY'] = openai.api_key
 
