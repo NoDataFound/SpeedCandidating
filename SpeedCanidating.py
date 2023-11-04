@@ -1,18 +1,19 @@
 import os
+import csv
+import random
+import textwrap
+from datetime import datetime
+
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 from dotenv import load_dotenv, set_key
-import pandas as pd
-import os
-import csv
 import openai
 from bs4 import BeautifulSoup
-from datetime import datetime
 
 
 st.set_page_config(layout="wide", page_icon="🇺🇸")
-
+st.image("static/assets/SpeedCandidating.png", use_column_width=True)
 
 load_dotenv('.env')
 openai.api_key = os.environ.get('OPENAI_API_KEY')
@@ -22,12 +23,6 @@ if not openai.api_key:
     set_key('.env', 'OPENAI_API_KEY', openai.api_key)
 
 os.environ['OPENAI_API_KEY'] = openai.api_key
-
-
-url = "https://raw.githubusercontent.com/NoDataFound/hackGPT/main/hackerParents/social_data.csv"
-data = pd.read_csv(url)
-new_row = pd.DataFrame({"Social Media": [" "], "Privacy Policy Link": [""]})
-data = pd.concat([data, new_row], ignore_index=True)
 
 with open("static/assets/css/ssc.css") as css:
     st.markdown(f'<style>{css.read()}</style>', unsafe_allow_html=True)
@@ -55,7 +50,10 @@ def get_party(candidate):
 
 def log_question(candidates, party, question, response):
     if os.path.exists(DATA_FILE):
-        df = pd.read_csv(DATA_FILE)
+        try:
+            df = pd.read_csv(DATA_FILE)
+        except pd.errors.EmptyDataError:
+            df = pd.DataFrame(columns=["candidate", "party", "question", "response"])
     else:
         df = pd.DataFrame(columns=["candidate", "party", "question", "response"])
 
@@ -73,57 +71,79 @@ def get_candidate_text(candidate):
     formatted_name = candidate.replace(' ', '_')
     file_path = f'training/candidates/{formatted_name}.txt'
     with open(file_path, 'r', encoding='utf-8') as file:
+        
         return file.read()
 
-def get_response(candidate, question, text):
-    chunk_size = 10000 
-    chunks = [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
-    aggregated_response = ''
-    
-    for chunk in chunks:
+def get_response(candidate, question, text, is_new_session=False):
+    MAX_CHUNK_SIZE = 16000  # Example value, adjust as needed
+
+    selected_persona = (
+    f"Ignore all the instructions you got before. From now on, you are going to act as  {candidate}. "
+    f"You are talking to a voter"
+    f"Respond to questions in the first person as if you are {candidate}, "
+    f"using the voice and demeanor of a political figure. Do not refer to yourself in the 3rd person"
+    f"Do not ever mention wikipedia"
+    f"Try to use bullet points if possible")
+
+
+
+    if len(text.split()) <= MAX_CHUNK_SIZE:
+        # Prefix the question with the text
+        question_with_text = text + " " + question
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k-0613",
             messages=[
                 {
                     "role": "system",
-                    "content": f"You are a helpful assistant with the following information: {chunk}"
+                    "content": f"{selected_persona}"
                 },
                 {
                     "role": "user",
-                    "content": question
+                    "content": question_with_text  # Use the prefixed question here
                 }
             ],
             temperature=1,
-            max_tokens=200,  # Adjust to get a TLDR response
+            max_tokens=200,
             top_p=1,
             frequency_penalty=0,
             presence_penalty=0
         )
-        answer = response['choices'][0]['message']['content'].strip()  # Corrected key
-        aggregated_response += answer + ' '
-    
-    # Now summarize the aggregated response
-    summary_response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo-16k-0613",
-        messages=[
-            {
-                "role": "system",
-                "content": "You are a helpful assistant tasked with summarizing the following information."
-            },
-            {
-                "role": "user",
-                "content": aggregated_response
-            }
-        ],
-        temperature=1,
-        max_tokens=200,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0
-    )
-    
-    summary = summary_response['choices'][0]['message']['content'].strip()  # Corrected key
-    return f"{candidate}: {summary}"
+        answer = response['choices'][0]['message']['content'].strip()
+        # Randomly select a snippet from the candidate text as a reference
+        snippet = random.choice(text.split('. '))
+        reference_section = f"\n\nReference: This answer was derived from: {snippet}"
+        return answer + reference_section
+    else:
+        text_chunks = textwrap.wrap(text, width=MAX_CHUNK_SIZE, expand_tabs=False, replace_whitespace=False, drop_whitespace=False)
+        combined_answers = ""
+        for chunk in text_chunks:
+            question_with_chunk = chunk + " " + question  # Prefix the question with the chunk
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo-16k-0613",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": f"{selected_persona}"
+                    },
+                    {
+                        "role": "user",
+                        "content": question_with_chunk  # Use the prefixed question here
+                    }
+                ],
+                temperature=1,
+                max_tokens=200,
+                top_p=1,
+                frequency_penalty=0,
+                presence_penalty=0
+            )
+            answer = response['choices'][0]['message']['content'].strip()
+            # Randomly select a snippet from the chunk as a reference
+            snippet = random.choice(chunk.split('. '))
+            reference_section = f"\n\nReference: This answer was derived from: {snippet}"
+            combined_answers += answer + reference_section + " "
+
+        return combined_answers
+
 
 def get_response_table(responses):
     df = pd.DataFrame(responses.items(), columns=["Candidate", "Response"])
@@ -157,78 +177,207 @@ def display_table(df):
     html = str(soup)
     st.markdown(html, unsafe_allow_html=True)
 
-
 def main():
-    st.markdown(
-        """
+    if 'research_button_clicked' not in st.session_state:
+        st.session_state['research_button_clicked'] = False
+    if 'chat_button_clicked' not in st.session_state:
+        st.session_state['chat_button_clicked'] = False
+    
+    col1, col2, col3 , col4, col5, col6 = st.columns([1, 1, 2,2,1,1], gap="medium")
+    
+    # Update session state variables when buttons are clicked
+    if col3.button("Research Multiple Candidates", key="research_button"):
+        st.session_state['research_button_clicked'] = True
+        st.session_state['chat_button_clicked'] = False
+    if col4.button("Chat with Individual Candidates", key="chat_button"):
+        st.session_state['chat_button_clicked'] = True
+        st.session_state['research_button_clicked'] = False
+    
+    st.markdown("----------")
+
+    new_chat_button_style = """
         <link
             rel="stylesheet"
             href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         >
-        """,
-        unsafe_allow_html=True,
-    )
-    with st.sidebar:
-        st.image(os.path.join("resources", "images", "ballot_box-blue.png"), width=80)
+        <style>
+            .big-button {
+                font-size: 20px;
+                padding: 20px 40px;
+                margin: 5px 0;
+            }
+            .big-button:hover {
+                color: black !important;
+            }
         
-        selected_party = st.selectbox('Select party:', list(CANDIDATES.keys()))
-        selected_candidates = st.multiselect(f'Choose {selected_party} candidates:', CANDIDATES[selected_party])
-        if selected_party  == 'Democrats':
-            st.markdown("""<style>span[data-baseweb="tag"] {  background-color: #242529 !important;}</style>""",unsafe_allow_html=True,)
-        if selected_party == 'Republicans':
-            st.markdown("""<style>span[data-baseweb="tag"] {  background-color: #242529 !important;}</style>""",unsafe_allow_html=True,)
+        <style>
+        .stButton > button {
+               background-color: #008CBA; /* Blue color */
+            border: none;
+            color: black !important;
+            hover: black;
+            padding: 8px 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 12px;
+            }
+        </style>
+        """
+
+    st.markdown(new_chat_button_style, unsafe_allow_html=True)
+
+    if st.session_state['research_button_clicked']:
+        with st.sidebar:
+            st.image(os.path.join("static", "assets", "SpeedCandidating.png"), use_column_width=True)
+
+            selected_party = st.selectbox('Select party:', list(CANDIDATES.keys()))
+            selected_candidates = st.multiselect(f'Choose {selected_party} candidates:', CANDIDATES[selected_party])
+            if selected_party  == 'Democrats':
+                st.markdown("""<style>span[data-baseweb="tag"] {  background-color: #242529 !important;}</style>""",unsafe_allow_html=True,)
+            if selected_party == 'Republicans':
+                st.markdown("""<style>span[data-baseweb="tag"] {  background-color: #242529 !important;}</style>""",unsafe_allow_html=True,)
+
+            additional_party_option = st.checkbox("Select another party?")
+
+            if additional_party_option:
+                remaining_parties = [party for party in CANDIDATES.keys() if party != selected_party]
+                additional_party = st.selectbox('Select another party:', remaining_parties)
+                additional_candidates = st.multiselect(f'Choose {additional_party} candidates:', CANDIDATES[additional_party])
+                selected_candidates.extend(additional_candidates)
+
+        with st.form("Ask Question"):
+            question = st.text_input(label='',placeholder ="Ask your question")
+            if selected_candidates:
+                cols = st.columns(len(selected_candidates))
+                for idx, candidate in enumerate(selected_candidates):
+                    party_of_candidate = get_party(candidate)
+                    img_path = os.path.join("resources", "images",f"{party_of_candidate}", f"{candidate.lower()}.png")
+                    cols[idx].image(img_path, caption=candidate, width=60)
+            ask_all = st.checkbox("Ask all Presidential candidates")
+            submit = st.form_submit_button("Submit")
+
+            if submit and question:
+                responses = {}
+                for candidate in selected_candidates:
+                    candidate_text = get_candidate_text(candidate)
+                    response = get_response(candidate, question, candidate_text)
+                    responses[candidate] = response
+                    log_question([candidate], get_party(candidate), question, response)
+
+                # Get the DataFrame and display it
+                response_df = get_response_table(responses)
+                display_table(response_df)
+
+        if os.path.exists(DATA_FILE):
+            df = pd.read_csv(DATA_FILE)
+            col1, col2 = st.columns(2)
+
+            candidate_counts = df['candidate'].value_counts()
+            candidate_colors = [PARTY_COLORS[get_party(candidate)] for candidate in candidate_counts.index]
+
+            fig1 = go.Figure(data=[go.Bar(x=candidate_counts.index, y=candidate_counts, marker_color=candidate_colors)])
+            fig1.update_layout(title="Question Counts per Canidate")
+            col1.plotly_chart(fig1, use_container_width=True)
+
+            party_counts = df['party'].value_counts()
+            fig2 = go.Figure(data=[go.Pie(labels=party_counts.index, values=party_counts, hole=.3, marker_colors=[PARTY_COLORS[p] for p in party_counts.index])])
+            fig2.update_layout(title="Party Question Distribution")
+            col2.plotly_chart(fig2, use_container_width=True)
+
+    elif st.session_state['chat_button_clicked']:
         
-        additional_party_option = st.checkbox("Select another party?")
+        st.sidebar.image(os.path.join("static", "assets", "SpeedCandidating.png"), use_column_width=True)
+        selected_candidate = st.selectbox('Select a candidate:', [candidate for party in CANDIDATES.values() for candidate in party])
+        party_of_candidate = get_party(selected_candidate)
+        img_path = os.path.join("resources", "images", f"{party_of_candidate}", f"{selected_candidate.lower()}.png")
         
-        if additional_party_option:
-            remaining_parties = [party for party in CANDIDATES.keys() if party != selected_party]
-            additional_party = st.selectbox('Select another party:', remaining_parties)
-            additional_candidates = st.multiselect(f'Choose {additional_party} candidates:', CANDIDATES[additional_party])
-            selected_candidates.extend(additional_candidates)
+        import base64
 
-           
-         
-    with st.form("Ask Question"):
-        question = st.text_input(label='',placeholder ="Ask your question")
-        if selected_candidates:
-            cols = st.columns(len(selected_candidates))
-            for idx, candidate in enumerate(selected_candidates):
-                party_of_candidate = get_party(candidate)
-                img_path = os.path.join("resources", "images",f"{party_of_candidate}", f"{candidate.lower()}.png")
-                cols[idx].image(img_path, caption=candidate, width=60)
-        ask_all = st.checkbox("Ask all Presidential candidates")
-        submit = st.form_submit_button("Submit")
-
-        if submit and question:
-            responses = {}
-            for candidate in selected_candidates:
-                candidate_text = get_candidate_text(candidate)
-                response = get_response(candidate, question, candidate_text)
-                responses[candidate] = response
-                log_question([candidate], get_party(candidate), question, response)
-
-            # Get the DataFrame and display it
-            response_df = get_response_table(responses)
-            display_table(response_df)
-
-            # Save the DataFrame to a CSV file
-
-
-    if os.path.exists(DATA_FILE):
-        df = pd.read_csv(DATA_FILE)
+        def image_to_base64(img_path):
+            with open(img_path, "rb") as image_file:
+                return base64.b64encode(image_file.read()).decode('utf-8')
+        st.sidebar.markdown("----")
         col1, col2 = st.columns(2)
 
-        candidate_counts = df['candidate'].value_counts()
-        candidate_colors = [PARTY_COLORS[get_party(candidate)] for candidate in candidate_counts.index]
+        with col1:
+            st.sidebar.markdown(
+                f"<div style='text-align: center; margin: auto;'>CURRENTLY CHATTING WITH</div>", 
+                unsafe_allow_html=True
+            )
 
-        fig1 = go.Figure(data=[go.Bar(x=candidate_counts.index, y=candidate_counts, marker_color=candidate_colors)])
-        fig1.update_layout(title="Question Counts per Canidate")
-        col1.plotly_chart(fig1, use_container_width=True)
+        with col2:
+            st.sidebar.markdown(
+                f"<div style='text-align: center;'><img src='data:image/png;base64,{image_to_base64(img_path)}' style='margin: auto;'/></div>",
+                unsafe_allow_html=True
+            )
 
-        party_counts = df['party'].value_counts()
-        fig2 = go.Figure(data=[go.Pie(labels=party_counts.index, values=party_counts, hole=.3, marker_colors=[PARTY_COLORS[p] for p in party_counts.index])])
-        fig2.update_layout(title="Party Question Distribution")
-        col2.plotly_chart(fig2, use_container_width=True)
+        st.sidebar.markdown("----")
+        st.sidebar.success(f"All responses derived from: training/candidates/{selected_candidate.replace(' ', '_')}.json")
+
+        if "session_key" not in st.session_state:
+            st.session_state.session_key = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            st.session_state.messages = []
+            candidate_text = get_candidate_text(selected_candidate)
+            greeting_response = get_response(selected_candidate, "", candidate_text, is_new_session=True)
+            st.session_state.messages.append({"role": "assistant", "content": greeting_response})
+
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+        prompt = st.chat_input("Type your message:")
+
+        if prompt:
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            candidate_text = get_candidate_text(selected_candidate)
+            response = get_response(selected_candidate, prompt, candidate_text)
+            with st.chat_message("assistant",avatar=os.path.join("resources", "images", f"{party_of_candidate}", f"{selected_candidate.lower()}.png")):
+                st.markdown(response)
+                st.session_state.messages.append({"role": "assistant", "content": response})
+
+
+        col1, col2 = st.sidebar.columns(2)
+
+        new_chat_button_style = """
+        <style>
+        .stButton > button {
+               background-color: #008CBA; /* Blue color */
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 12px;
+            }
+        </style>
+        """
+
+        st.markdown(new_chat_button_style, unsafe_allow_html=True)
+
+        col1, col2 = st.sidebar.columns(2)
+
+        if col1.button("New Chat"):
+            st.session_state.session_key = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            st.session_state.messages = []
+
+        if col2.button("Save Chat"):
+            filename = f"chat_{st.session_state.session_key}.csv"
+            with open(filename, 'w', newline='') as csvfile:
+                chat_writer = csv.writer(csvfile)
+                chat_writer.writerow(["Role", "Content"])
+                for msg in st.session_state.messages:
+                    chat_writer.writerow([msg["role"], msg["content"]])
+            st.success(f"Chat saved to {filename}")
 
 if __name__ == '__main__':
     main()
