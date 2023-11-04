@@ -1,0 +1,7 @@
+pandas
+plotly
+streamlit
+python-dotenv
+openai
+beautifulsoup4
+lxml
