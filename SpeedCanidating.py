@@ -28,16 +28,8 @@ readme_placeholder = st.empty()
 
 readme_content = """
 
-![GitHub last commit](https://img.shields.io/github/last-commit/NoDataFound/SpeedCandidating)
-![GitHub issues](https://img.shields.io/github/issues-raw/NoDataFound/SpeedCandidating)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/NoDataFound/SpeedCandidating)
 ![GitHub](https://img.shields.io/github/license/NoDataFound/SpeedCandidating)
 ![GitHub stars](https://img.shields.io/github/stars/NoDataFound/SpeedCandidating?style=social)
-![OpenAI API](https://img.shields.io/badge/OpenAI%20API-B1A6F0.svg?style=flat-square&logo=openai)
-![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B.svg?style=flat-square&logo=streamlit)
-![Pandas](https://img.shields.io/badge/pandas-150458.svg?style=flat-square&logo=pandas)
-![Plotly](https://img.shields.io/badge/plotly-3F4F75.svg?style=flat-square&logo=plotly)
-![Python](https://img.shields.io/badge/python-3776AB.svg?style=flat-square&logo=python&logoColor=ffffff)
 
 SpeedCandidating is an interactive application designed to engage users in political discourse, allowing them to ask questions and receive responses from virtual representations of political candidates trained from official sources. Powered by OpenAI's GPT models, it aims to eliminate media bias and simulate a candidating session where users can quickly gather insights into various political personas.
 
@@ -46,14 +38,8 @@ SpeedCandidating is an interactive application designed to engage users in polit
 - **Multiple Party Interaction**: Engage with candidates across different political parties.
 - **Dynamic Questioning**: Ask questions and get personalized responses from the candidate's perspective.
 - **Data Logging**: Keeps track of all questions and responses for further analysis.
-- **Responsive UI**: A web interface that is intuitive and user-friendly.
 
-## How It Works
-
-- The platform allows users to select candidates and ask questions through a simple interface.
-- Using OpenAI's API, it generates responses based on the persona of the selected candidate.
-- All interactions are logged and can be analyzed to understand the political inclinations and talking points of various candidates.
-
+Visit https://github.com/NoDataFound/SpeedCandidating to learn more.
 """
 
 readme_placeholder.markdown(readme_content)
