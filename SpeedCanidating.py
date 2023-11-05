@@ -20,7 +20,7 @@ import csv
 import openai
 from bs4 import BeautifulSoup
 from datetime import datetime
-
+from io import BytesIO, StringIO
 
 st.set_page_config(layout="wide", page_icon="🇺🇸")
 st.image("static/assets/SpeedCandidating.png", use_column_width=True)
@@ -386,6 +386,7 @@ def main():
         if col2.button("Save Chat"):
             filename = f"chat_{st.session_state.session_key}.csv"
             with open(filename, 'w', newline='') as csvfile:
+                csv_buffer = StringIO()
                 chat_writer = csv.writer(csvfile)
                 chat_writer.writerow(["Role", "Content"])
                 for msg in st.session_state.messages:
