@@ -24,7 +24,7 @@ from io import BytesIO, StringIO
 
 st.set_page_config(layout="wide", page_icon="🇺🇸")
 st.image("static/assets/SpeedCandidating.png", use_column_width=True)
-
+readme_placeholder = st.empty()
 if 'readme_displayed' not in st.session_state:
     st.session_state['readme_displayed'] = True
 if 'research_button_clicked' not in st.session_state:
