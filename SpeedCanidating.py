@@ -54,10 +54,6 @@ SpeedCandidating is an interactive application designed to engage users in polit
 - Using OpenAI's API, it generates responses based on the persona of the selected candidate.
 - All interactions are logged and can be analyzed to understand the political inclinations and talking points of various candidates.
 
-
-https://github.com/NoDataFound/SpeedCandidating/assets/3261849/042a2892-0889-4805-be77-1a2d9c98cecc
-
-
 """
 
 readme_placeholder.markdown(readme_content)
