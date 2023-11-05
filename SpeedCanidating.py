@@ -391,14 +391,14 @@ def main():
                 chat_writer.writerow(["Role", "Content"])
                 for msg in st.session_state.messages:
                     chat_writer.writerow([msg["role"], msg["content"]])
-            csv_buffer.seek(0)
-            st.success(f"Chat saved to {filename}")
-            st.download_button(
-                label="Download Chat",
-                data=csv_buffer.getvalue(),
-                file_name=filename,
-                mime='text/csv',
-                )
+                    csv_buffer.seek(0)
+                    st.success(f"Chat saved to {filename}")
+                    st.download_button(
+                    label="Download Chat",
+                    data=csv_buffer.getvalue(),
+                    file_name=filename,
+                    mime='text/csv',
+                    )
 
 if __name__ == '__main__':
     main()
