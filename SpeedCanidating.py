@@ -398,6 +398,7 @@ def main():
                     data=csv_buffer.getvalue(),
                     file_name=filename,
                     mime='text/csv',
+                    key="chat_button",
                     )
 
 if __name__ == '__main__':
