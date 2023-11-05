@@ -35,7 +35,7 @@ if 'chat_button_clicked' not in st.session_state:
 if st.session_state['readme_displayed']:
     readme_placeholder = st.empty()  
 
-readme_content = """
+    readme_content = """
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/NoDataFound/SpeedCandidating)
 ![GitHub issues](https://img.shields.io/github/issues-raw/NoDataFound/SpeedCandidating)
@@ -58,7 +58,7 @@ SpeedCandidating is an interactive application designed to engage users in polit
 Visit  https://github.com/NoDataFound/SpeedCandidating  to learn more.
 """
 
-readme_placeholder.markdown(readme_content)
+    readme_placeholder.markdown(readme_content)
 
 #load_dotenv('.env')
 openai.api_key = st.secrets["OPENAI"]["OPENAI_API_KEY"]
