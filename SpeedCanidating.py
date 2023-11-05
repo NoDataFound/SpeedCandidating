@@ -394,20 +394,20 @@ def main():
                 chat_writer.writerow([msg["role"], msg["content"]])
 
     # Rewind the buffer to the start
-                csv_buffer.seek(0)
+            csv_buffer.seek(0)
     
     # Show the success message
-                st.success(f"Chat saved to {filename}")
+            st.success(f"Chat saved to {filename}")
     
     # Create a link for downloading
-                st.download_button(
-                    label="Download Chat",
-                    data=csv_buffer.getvalue(),
-                    file_name=filename,
-                    mime='text/csv',
+            st.download_button(
+                label="Download Chat",
+                data=csv_buffer.getvalue(),
+                file_name=filename,
+                mime='text/csv',
         # Ensure that the key here is unique if needed
-                    key="download_chat_button"
-                    )
+                key="download_chat_button"
+                )
 
 if __name__ == '__main__':
     main()
