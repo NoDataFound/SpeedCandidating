@@ -77,7 +77,7 @@ def log_question(candidates, party, question, response):
             "question": [question],
             "response": [response]
         })
-        df = df.concat(new_data, ignore_index=True)
+        df = df.append(new_data, ignore_index=True)
     df.to_csv(DATA_FILE, index=False)
 
 def get_candidate_text(candidate): 
