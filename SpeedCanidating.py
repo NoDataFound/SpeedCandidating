@@ -386,28 +386,30 @@ def main():
         if col2.button("Save Chat"):
             filename = f"chat_{st.session_state.session_key}.csv"
 
-            # Create a string buffer
             csv_buffer = StringIO()
             chat_writer = csv.writer(csv_buffer)
-            chat_writer.writerow(["Role", "Content"])
-            for msg in st.session_state.messages:
-                chat_writer.writerow([msg["role"], msg["content"]])
+            chat_writer.writerow(["Candidate", "Party", "Role", "Question", "Response"])
 
-    # Rewind the buffer to the start
+            for msg in st.session_state.messages:
+                if msg['role'] == 'user':
+                    question = msg['content']
+                    response = ""  # Placeholder for the response which will be the next message
+                elif msg['role'] == 'assistant':
+                    response = msg['content']
+                    candidate = "Name"  # This should be replaced with actual candidate name from msg or session_state
+                    party = get_party(candidate)  # Call your get_party function
+                    chat_writer.writerow([candidate, party, msg['role'], question, response])
+
             csv_buffer.seek(0)
-    
-    # Show the success message
+
             st.success(f"Chat saved to {filename}")
-    
-    # Create a link for downloading
+
             st.download_button(
                 label="Download Chat",
                 data=csv_buffer.getvalue(),
                 file_name=filename,
                 mime='text/csv',
-        # Ensure that the key here is unique if needed
                 key="download_chat_button"
-                )
-
+            )
 if __name__ == '__main__':
     main()
