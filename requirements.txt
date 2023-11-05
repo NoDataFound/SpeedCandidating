@@ -6,6 +6,5 @@ openai
 beautifulsoup4
 lxml
 datetime
-textwrap
 csv
 random
