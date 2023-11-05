@@ -5,6 +5,3 @@ python-dotenv
 openai
 beautifulsoup4
 lxml
-datetime
-csv
-random
