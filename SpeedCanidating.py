@@ -28,7 +28,6 @@ readme_placeholder = st.empty()
 
 readme_content = """
 
-![GitHub](https://img.shields.io/github/license/NoDataFound/SpeedCandidating)
 ![GitHub stars](https://img.shields.io/github/stars/NoDataFound/SpeedCandidating?style=social)
 
 SpeedCandidating is an interactive application designed to engage users in political discourse, allowing them to ask questions and receive responses from virtual representations of political candidates trained from official sources. Powered by OpenAI's GPT models, it aims to eliminate media bias and simulate a candidating session where users can quickly gather insights into various political personas.
