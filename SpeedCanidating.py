@@ -24,11 +24,28 @@ from io import BytesIO, StringIO
 
 st.set_page_config(layout="wide", page_icon="🇺🇸")
 st.image("static/assets/SpeedCandidating.png", use_column_width=True)
-readme_placeholder = st.empty() 
+
+if 'readme_displayed' not in st.session_state:
+    st.session_state['readme_displayed'] = True
+if 'research_button_clicked' not in st.session_state:
+    st.session_state['research_button_clicked'] = False
+if 'chat_button_clicked' not in st.session_state:
+    st.session_state['chat_button_clicked'] = False
+
+if st.session_state['readme_displayed']:
+    readme_placeholder = st.empty()  
 
 readme_content = """
 
+![GitHub last commit](https://img.shields.io/github/last-commit/NoDataFound/SpeedCandidating)
+![GitHub issues](https://img.shields.io/github/issues-raw/NoDataFound/SpeedCandidating)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/NoDataFound/SpeedCandidating)
 ![GitHub stars](https://img.shields.io/github/stars/NoDataFound/SpeedCandidating?style=social)
+![OpenAI API](https://img.shields.io/badge/OpenAI%20API-B1A6F0.svg?style=flat-square&logo=openai)
+![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B.svg?style=flat-square&logo=streamlit)
+![Pandas](https://img.shields.io/badge/pandas-150458.svg?style=flat-square&logo=pandas)
+![Plotly](https://img.shields.io/badge/plotly-3F4F75.svg?style=flat-square&logo=plotly)
+![Python](https://img.shields.io/badge/python-3776AB.svg?style=flat-square&logo=python&logoColor=ffffff)
 
 SpeedCandidating is an interactive application designed to engage users in political discourse, allowing them to ask questions and receive responses from virtual representations of political candidates trained from official sources. Powered by OpenAI's GPT models, it aims to eliminate media bias and simulate a candidating session where users can quickly gather insights into various political personas.
 
@@ -38,7 +55,7 @@ SpeedCandidating is an interactive application designed to engage users in polit
 - **Dynamic Questioning**: Ask questions and get personalized responses from the candidate's perspective.
 - **Data Logging**: Keeps track of all questions and responses for further analysis.
 
-Visit https://github.com/NoDataFound/SpeedCandidating to learn more.
+Visit  https://github.com/NoDataFound/SpeedCandidating  to learn more.
 """
 
 readme_placeholder.markdown(readme_content)
@@ -216,15 +233,18 @@ def main():
     
     col1, col2, col3 , col4, col5, col6 = st.columns([1, 1, 2,2,1,1], gap="medium")
     
-    # Update session state variables when buttons are clicked
     if col3.button("Research Multiple Candidates", key="research_button"):
         st.session_state['research_button_clicked'] = True
         st.session_state['chat_button_clicked'] = False
-        readme_placeholder.empty()
+        st.session_state['readme_displayed'] = False  
+
     if col4.button("Chat with Individual Candidates", key="chat_button"):
         st.session_state['chat_button_clicked'] = True
         st.session_state['research_button_clicked'] = False
-        readme_placeholder.empty()
+        st.session_state['readme_displayed'] = False  
+
+    if not st.session_state['readme_displayed']:
+        readme_placeholder.empty()  
     
     st.markdown("----------")
 
