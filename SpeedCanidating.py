@@ -136,7 +136,6 @@ def get_response(candidate, question, text, is_new_session=False):
 
 
     if len(text.split()) <= MAX_CHUNK_SIZE:
-        # Prefix the question with the text
         question_with_text = text + " " + question
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k-0613",
@@ -157,10 +156,17 @@ def get_response(candidate, question, text, is_new_session=False):
             presence_penalty=0
         )
         answer = response['choices'][0]['message']['content'].strip()
-        # Randomly select a snippet from the candidate text as a reference
-        snippet = random.choice(text.split('. '))
-        reference_section = f"\n\nReference: This answer was derived from: {snippet}"
+        text_snippets = text.split('. ')
+        relevant_snippets = random.sample(text_snippets, min(3, len(text_snippets)))  # Get up to 3 snippets
+        
+        # Construct the reference section
+        reference_section = "\n\nReference: "
+        reference_section += f"\n- My answer was derived from: training/candidates/{candidate.replace(' ', '_')}.txt"
+        for snippet in relevant_snippets:
+            reference_section += f"\n- {snippet}"
+
         return answer + reference_section
+    
     else:
         text_chunks = textwrap.wrap(text, width=MAX_CHUNK_SIZE, expand_tabs=False, replace_whitespace=False, drop_whitespace=False)
         combined_answers = ""
@@ -344,7 +350,7 @@ def main():
     elif st.session_state['chat_button_clicked']:
         
         st.sidebar.image(os.path.join("static", "assets", "SpeedCandidating.png"), use_column_width=True)
-        selected_candidate = st.selectbox('Select a candidate:', [candidate for party in CANDIDATES.values() for candidate in party])
+        selected_candidate = st.selectbox('Select a candidate:', ["Candidate"] + [candidate for party in CANDIDATES.values() for candidate in party])
         party_of_candidate = get_party(selected_candidate)
         img_path = os.path.join("resources", "images", f"{party_of_candidate}", f"{selected_candidate.lower()}.png")
         
@@ -429,15 +435,15 @@ def main():
             csv_buffer = StringIO()
             chat_writer = csv.writer(csv_buffer)
             chat_writer.writerow(["Candidate", "Party", "Role", "Question", "Response"])
-
+            question = ""
             for msg in st.session_state.messages:
                 if msg['role'] == 'user':
                     question = msg['content']
-                    response = ""  # Placeholder for the response which will be the next message
+                    response = ""  
                 elif msg['role'] == 'assistant':
                     response = msg['content']
-                    candidate = "Name"  # This should be replaced with actual candidate name from msg or session_state
-                    party = get_party(candidate)  # Call your get_party function
+                    candidate = "Name"  
+                    party = get_party(candidate)  
                     chat_writer.writerow([candidate, party, msg['role'], question, response])
 
             csv_buffer.seek(0)
