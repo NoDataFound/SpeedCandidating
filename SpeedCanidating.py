@@ -1,15 +1,25 @@
 import os
-import csv
-import random
-import textwrap
-from datetime import datetime
-
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 from dotenv import load_dotenv, set_key
 import openai
 from bs4 import BeautifulSoup
+from datetime import datetime
+import textwrap
+import csv
+import random
+import os
+import pandas as pd
+import plotly.graph_objects as go
+import streamlit as st
+from dotenv import load_dotenv, set_key
+import pandas as pd
+import os
+import csv
+import openai
+from bs4 import BeautifulSoup
+from datetime import datetime
 
 
 st.set_page_config(layout="wide", page_icon="🇺🇸")
