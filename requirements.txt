@@ -2,6 +2,6 @@ pandas==1.5.3
 plotly
 streamlit
 python-dotenv
-openai
+openai==0.28
 beautifulsoup4
 lxml
