@@ -34,6 +34,10 @@ SpeedCandidating is an interactive application designed to engage users in polit
 
 
 
+https://github.com/NoDataFound/SpeedCandidating/assets/3261849/ebeb9f9d-9186-4592-bf4f-fb8d912a614f
+
+
+
 https://github.com/NoDataFound/SpeedCandidating/assets/3261849/042a2892-0889-4805-be77-1a2d9c98cecc
 
 
